@@ -87,7 +87,10 @@ def main():
             else: shutil.copy2(t, p)
     for f in ('start.py', 'START_Windows.bat', 'START_Mac.command', 'START_Linux.sh', 'README_FIRST.txt'):
         shutil.copy2(FILES / f, OUT / f)
+    for f in ('LICENSE.md', 'LICENSE-MODEL-AND-DATA.md'): shutil.copy2(FILES / f, OUT / f)
     (OUT / 'LICENSES.txt').write_text(
+        'newineGPT is free for non-commercial use and may not be sold or monetized: code under PolyForm Noncommercial 1.0.0 (LICENSE.md),\n'
+        'model and archive data under CC BY-NC 4.0 (LICENSE-MODEL-AND-DATA.md). Copyright (c) 2026 NEWINESOTS.\n\n'
         'Bundled third-party software (unmodified official builds):\n'
         '- llama.cpp b9580 (MIT), github.com/ggml-org/llama.cpp: runtime/*/llama*/ (LICENSE inside each)\n'
         '- CPython 3.12.16 (PSF License), portable builds from github.com/astral-sh/python-build-standalone release 20261026: runtime/*/python/\n'
