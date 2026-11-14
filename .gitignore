@@ -1,0 +1,13 @@
+# large or local-only files (they ship in the release downloads, not in git)
+*.gguf
+*.sqlite
+*.zip
+dist/
+pack/
+models/
+runtime/
+eval/human_use/
+eval/compare/
+eval/blind/
+__pycache__/
+.DS_Store

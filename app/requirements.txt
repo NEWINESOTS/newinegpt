@@ -1,0 +1,5 @@
+# newineGPT app (14 Nov 2026). Only numpy is required: search vectors and answers both run through llama.cpp (llama-server, b9580).
+numpy==2.5.4
+# optional, only for NEWINEGPT_EMBED_BACKEND=torch (the original search-vector path):
+# sentence-transformers==6.2.0
+# torch==2.15.0

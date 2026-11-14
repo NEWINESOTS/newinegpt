@@ -1,0 +1,17 @@
+# Blind batch 1 (15 AI-written questions from Codex, 12 Nov 2026). Graded blind by Codex, then used to fix the app: REGRESSION ONLY from now on.
+# First-run outputs: eval/compare/questions_final/_first_run/ ; grades: eval/blind/questions_final/grades.csv
+what is the difference between fearing God and being afraid of him
+how do I know whether a prophetic word is an instruction to act or something to wait for
+find a message about what to do when a prophecy seems delayed
+what does the archive say about worship when you do not feel anything
+which teaching talks about forgiving someone without pretending they did not hurt you
+is there a message that explains the difference between giving an offering and making a sacrifice
+what did Daps teach about spiritual gifts and character
+what did Fanny teach about hearing God for yourself
+pls find Suleiman teaching about humility and spiritual authority together
+what did Babs teach about family in 2018
+did Clems explain the difference between winning converts and making disciples
+find messages that use Acts 13 to explain sending people into ministry
+can you show two different speakers explaining the same idea about stewardship, with a short quote from each
+I remember a teaching about an open door that you should not walk through immediately. Which message could that be
+which message explains how to recover a forgotten email password

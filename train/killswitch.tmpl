@@ -1,0 +1,6 @@
+#!/bin/bash
+# Pod-side hard cap (template: __SECS__ is filled by launch_train.sh). RunPod's env lives in PID 1; ssh-started shells lack it.
+# The pod's own key may not be allowed to remove the pod (v5: "Unauthorized" on get), so the Mac-side terminate stays the real cap.
+export $(tr '\0' '\n' < /proc/1/environ | grep -E '^RUNPOD_(POD_ID|API_KEY)=' | xargs)
+sleep __SECS__
+runpodctl remove pod "$RUNPOD_POD_ID" || runpodctl stop pod "$RUNPOD_POD_ID" || pkill -f pod_train
