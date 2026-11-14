@@ -1,0 +1,70 @@
+name: release smoke test
+# Downloads a release exactly as a user would (app zip + Q4 model parts into Downloads), verifies checksums, starts newineGPT with the
+# chat server (no browser on CI), asks a real question through the chat API, rates it, and checks the conversation was saved.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: release tag
+        default: v0.6.0-beta
+permissions:
+  contents: read
+env:
+  TAG: ${{ inputs.tag }}
+  Q: What did Prophetess Fanny say about angels?
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults: { run: { shell: pwsh } }
+    steps:
+      - name: Download like a user and verify
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          "{0:N1} GB RAM, {1} cores" -f ((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB), [Environment]::ProcessorCount
+          $D = "$env:USERPROFILE\Downloads"; New-Item -ItemType Directory $D -Force | Out-Null; Set-Location $D
+          gh release download $env:TAG -R $env:GITHUB_REPOSITORY -p 'newineGPT-beta-windows-x64.zip' -p 'newinegpt-4b-v6-Q4_K_M-imat-*' -p 'SHA256SUMS.txt'
+          foreach ($l in Get-Content SHA256SUMS.txt) { $h, $n = $l -split '  ', 2
+            if (Test-Path $n) { if ((Get-FileHash $n -Algorithm SHA256).Hash.ToLower() -ne $h) { throw "checksum mismatch: $n" } else { "ok $n" } } }
+          Expand-Archive newineGPT-beta-windows-x64.zip -DestinationPath "$D\newineGPT-beta-windows-x64"    # what Extract All does
+      - name: Start, ask, rate
+        run: |
+          $P = "$env:USERPROFILE\Downloads\newineGPT-beta-windows-x64\newineGPT"; Set-Location $P
+          cmd /c "echo.| START_Windows.bat --check"
+          $proc = Start-Process "$P\runtime\windows-x64\python\python.exe" -ArgumentList '-X','utf8','start.py','--no-browser' -WorkingDirectory $P -PassThru -RedirectStandardOutput "$env:RUNNER_TEMP\web.log" -RedirectStandardError "$env:RUNNER_TEMP\web.err"
+          $t = $null
+          for ($i = 0; $i -lt 900; $i += 5) { Start-Sleep 5
+            if (Test-Path eval\human_use\last_url.txt) { $t = ((Get-Content eval\human_use\last_url.txt) -split 't=')[1]
+              try { if ((Invoke-RestMethod http://127.0.0.1:8765/api/status -Headers @{'X-Token'=$t}).ready) { break } } catch {} } }
+          "ready after $i s"; Get-Content "$env:RUNNER_TEMP\web.log"
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          $r = Invoke-RestMethod http://127.0.0.1:8765/api/ask -Method Post -Headers @{'X-Token'=$t} -ContentType 'application/json' -Body (@{question=$env:Q} | ConvertTo-Json) -TimeoutSec 1200
+          "answer in $([int]$sw.Elapsed.TotalSeconds) s ($($r.message.source)):"; $r.message.answer
+          Invoke-RestMethod http://127.0.0.1:8765/api/rate -Method Post -Headers @{'X-Token'=$t} -ContentType 'application/json' -Body (@{conversation=$r.conversation; index=0; rating='g'; note='CI'} | ConvertTo-Json) | Out-Null
+          $c = Get-Content "eval\human_use\conversations\$($r.conversation).json" | ConvertFrom-Json
+          if ($c.messages[0].rating -ne 'good') { throw 'rating not saved' }; "conversation and rating saved"
+          if ((Invoke-WebRequest http://127.0.0.1:8765/api/status -SkipHttpErrorCheck).StatusCode -ne 403) { throw 'API answered without the key' }; "API refuses requests without the key"
+          if (-not ($r.message.answer -match '\[\d+\]')) { throw 'answer has no citation' }
+          Stop-Process $proc.Id; Get-Process llama-server -ErrorAction SilentlyContinue | Stop-Process
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Download like a user, verify, start, ask, rate
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          echo "$(nproc) cores, $(free -g | awk '/Mem/{print $2}') GB"; mkdir -p ~/Downloads && cd ~/Downloads
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p 'newineGPT-beta-linux-x64.zip' -p 'newinegpt-4b-v6-Q4_K_M-imat-*' -p 'SHA256SUMS.txt'
+          grep -E 'linux|Q4_K_M' SHA256SUMS.txt | sha256sum -c -
+          unzip -q newineGPT-beta-linux-x64.zip && cd newineGPT
+          bash START_Linux.sh --check
+          (bash START_Linux.sh --no-browser > /tmp/web.log 2>&1 &)
+          for i in $(seq 0 5 900); do sleep 5; T=$(sed -n 's/.*t=//p' eval/human_use/last_url.txt 2>/dev/null); [ -n "$T" ] && curl -s -H "X-Token: $T" localhost:8765/api/status | grep -q '"ready": true' && break; done
+          echo "ready after $i s"; cat /tmp/web.log
+          s=$(date +%s); R=$(curl -s --max-time 1200 -H "X-Token: $T" -H 'Content-Type: application/json' -d "{\"question\": \"$Q\"}" localhost:8765/api/ask)
+          echo "answer in $(( $(date +%s) - s )) s"; echo "$R" | python3 -c 'import json,sys; m=json.load(sys.stdin)["message"]; print(m["source"]); print(m["answer"]); assert "[" in m["answer"]'
+          C=$(echo "$R" | python3 -c 'import json,sys; print(json.load(sys.stdin)["conversation"])')
+          curl -s -H "X-Token: $T" -H 'Content-Type: application/json' -d "{\"conversation\": \"$C\", \"index\": 0, \"rating\": \"g\", \"note\": \"CI\"}" localhost:8765/api/rate
+          grep -q '"rating": "good"' eval/human_use/conversations/$C.json && echo "conversation and rating saved"
+          [ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8765/api/status)" = 403 ] && echo "API refuses requests without the key"
+          pkill -HUP -f 'start.py --no-browser'; sleep 3; n=$(pgrep -c llama-server || true); echo "llama helpers left after closing: $n"; [ "$n" = 0 ]
