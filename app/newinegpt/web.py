@@ -19,9 +19,12 @@ HERE = Path(__file__).resolve().parent
 USE = A.R / 'eval' / 'human_use'; CONV = USE / 'conversations'; SETTINGS = USE / 'settings.json'
 TOKEN = secrets.token_urlsafe(24)
 LOCK = threading.Lock()
-# NEWINEGPT_PUBLIC=1: hosted demo (e.g. a Hugging Face Space). Listens on 0.0.0.0:$PORT without the key; conversations stay in each
-# visitor's own browser (never listed to others); only ratings (question, answer, rating, note) are kept on the server, anonymously.
+# NEWINEGPT_PUBLIC=1: hosted demo (e.g. a Hugging Face Space). Listens on 0.0.0.0:$PORT without the key; each visitor's conversation
+# list stays in their own browser (never listed to others). For analysis and training (owner's decision, 14 Nov 2026) the server keeps,
+# anonymously (no name, no address): every answer record in public_answers.jsonl (question, route, passages, raw model output, answer,
+# checks, time) under a random answer id, and every rating in public_ratings.jsonl with that id. The page tells visitors so.
 PUBLIC = os.environ.get('NEWINEGPT_PUBLIC') == '1'
+WLOCK = threading.Lock()                     # one writer at a time for the .jsonl logs (answers and ratings arrive on different threads)
 MAX_WAITING = int(os.environ.get('NEWINEGPT_MAX_WAITING', 3))
 WAITING = [0]
 STATE = {'asker': None, 'ready': False, 'error': None, 'session': None, 'name': None, 'n': 0, 'started': time.time()}
@@ -58,7 +61,8 @@ def session_dir():
 
 
 def append(path, obj):
-    with open(path, 'a', encoding='utf-8') as f: f.write(json.dumps(obj, ensure_ascii=False) + '\n')
+    line = json.dumps(obj, ensure_ascii=False) + '\n'
+    with WLOCK, open(path, 'a', encoding='utf-8') as f: f.write(line)
 
 
 def conv_path(cid):
@@ -83,7 +87,9 @@ def do_ask(body):
     msg = {'question': q, 'answer': r['answer'], 'passages': r.get('passages', []), 'kind': r.get('kind'), 'source': r.get('source'),
            'asked_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'seconds': secs, 'n': n}
     if PUBLIC:
-        print(f"{msg['asked_at']} answered in {secs}s ({msg['source']})", flush=True)
+        msg['id'] = secrets.token_hex(8)
+        append(USE / 'public_answers.jsonl', dict(r, id=msg['id'], asked_at=msg['asked_at'], seconds=secs, model=Path(A.MODEL).name))
+        print(f"{msg['asked_at']} answered in {secs}s ({msg['source']}) id {msg['id']}", flush=True)
         return {'conversation': cid, 'message': msg, 'index': None}
     p = conv_path(cid)
     conv = json.loads(p.read_text(encoding='utf-8')) if p.exists() else {'id': cid, 'title': q[:80], 'created': msg['asked_at'], 'messages': []}
@@ -97,7 +103,9 @@ def do_rate(body):
     rating = {'g': 'good', 'p': 'partly', 'w': 'wrong'}.get((body.get('rating') or '')[:1])
     if not rating: raise ValueError('rating must be good, partly or wrong')
     if PUBLIC:
-        rec = {'rating': rating, 'note': (body.get('note') or '').strip()[:500], 'question': (body.get('question') or '')[:1000],
+        aid = body.get('answer_id') or ''
+        rec = {'answer_id': aid if re.fullmatch(r'[0-9a-f]{16}', aid) else None,     # joins public_answers.jsonl
+               'rating': rating, 'note': (body.get('note') or '').strip()[:500], 'question': (body.get('question') or '')[:1000],
                'answer': (body.get('answer') or '')[:4000], 'source': (body.get('source') or '')[:40], 'rated_at': time.strftime('%Y-%m-%d %H:%M:%S')}
         append(USE / 'public_ratings.jsonl', rec); print('rating ' + json.dumps(rec, ensure_ascii=False), flush=True)
         return {'ok': True}

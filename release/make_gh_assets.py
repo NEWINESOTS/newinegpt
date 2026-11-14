@@ -7,7 +7,10 @@
 Each zip has one top folder, newineGPT/, and its own SHA256SUMS.txt for the files inside it."""
 import hashlib, subprocess, sys
 from pathlib import Path
-R = Path.home() / 'newine_local'; PKG = R / 'release' / 'newineGPT_beta_20261114'; OUT = R / 'release' / 'gh_assets'
+R = Path.home() / 'newine_local'
+# args: [package folder] [output folder], both under release/ (v0.6.1: newineGPT_beta_v0.6.1 gh_assets_v0.6.1). The model parts do not
+# change between app versions: put them in the output folder beforehand (cp -c from gh_assets/, no extra disk) so SHA256SUMS covers them.
+PKG = R / 'release' / (sys.argv[1] if len(sys.argv) > 1 else 'newineGPT_beta_20261114'); OUT = R / 'release' / (sys.argv[2] if len(sys.argv) > 2 else 'gh_assets')
 SYSTEMS = {'windows-x64': ('windows-x64', 'START_Windows.bat'), 'linux-x64': ('linux-x64', 'START_Linux.sh'),
            'mac-intel': ('macos-x64', 'START_Mac.command'), 'mac-apple-silicon': ('macos-arm64', 'START_Mac.command')}
 STARTS = {'START_Windows.bat', 'START_Linux.sh', 'START_Mac.command'}

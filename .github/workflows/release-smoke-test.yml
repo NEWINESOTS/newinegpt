@@ -5,12 +5,16 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: release tag
+        description: release tag (app zips and SHA256SUMS.txt)
+        default: v0.6.1-beta
+      model_tag:
+        description: release tag that holds the model parts (unchanged since v0.6.0-beta)
         default: v0.6.0-beta
 permissions:
   contents: read
 env:
   TAG: ${{ inputs.tag }}
+  MODEL_TAG: ${{ inputs.model_tag }}
   Q: What did Prophetess Fanny say about angels?
 jobs:
   windows:
@@ -23,7 +27,8 @@ jobs:
         run: |
           "{0:N1} GB RAM, {1} cores" -f ((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB), [Environment]::ProcessorCount
           $D = "$env:USERPROFILE\Downloads"; New-Item -ItemType Directory $D -Force | Out-Null; Set-Location $D
-          gh release download $env:TAG -R $env:GITHUB_REPOSITORY -p 'newineGPT-beta-windows-x64.zip' -p 'newinegpt-4b-v6-Q4_K_M-imat-*' -p 'SHA256SUMS.txt'
+          gh release download $env:TAG -R $env:GITHUB_REPOSITORY -p 'newineGPT-beta-windows-x64.zip' -p 'SHA256SUMS.txt'
+          gh release download $env:MODEL_TAG -R $env:GITHUB_REPOSITORY -p 'newinegpt-4b-v6-Q4_K_M-imat-*'
           foreach ($l in Get-Content SHA256SUMS.txt) { $h, $n = $l -split '  ', 2
             if (Test-Path $n) { if ((Get-FileHash $n -Algorithm SHA256).Hash.ToLower() -ne $h) { throw "checksum mismatch: $n" } else { "ok $n" } } }
           Expand-Archive newineGPT-beta-windows-x64.zip -DestinationPath "$D\newineGPT-beta-windows-x64"    # what Extract All does
@@ -54,7 +59,8 @@ jobs:
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           echo "$(nproc) cores, $(free -g | awk '/Mem/{print $2}') GB"; mkdir -p ~/Downloads && cd ~/Downloads
-          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p 'newineGPT-beta-linux-x64.zip' -p 'newinegpt-4b-v6-Q4_K_M-imat-*' -p 'SHA256SUMS.txt'
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p 'newineGPT-beta-linux-x64.zip' -p 'SHA256SUMS.txt'
+          gh release download "$MODEL_TAG" -R "$GITHUB_REPOSITORY" -p 'newinegpt-4b-v6-Q4_K_M-imat-*'
           grep -E 'linux|Q4_K_M' SHA256SUMS.txt | sha256sum -c -
           unzip -q newineGPT-beta-linux-x64.zip && cd newineGPT
           bash START_Linux.sh --check

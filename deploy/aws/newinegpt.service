@@ -1,0 +1,19 @@
+[Unit]
+Description=newineGPT public demo
+After=network-online.target
+[Service]
+User=newinegpt
+WorkingDirectory=/opt/newinegpt/app/app
+Environment=NEWINEGPT_PUBLIC=1 PORT=7860 NEWINEGPT_THREADS=4 NEWINEGPT_NGL=0 HF_HUB_OFFLINE=1 PYTHONUTF8=1
+Environment=NEWINEGPT_MODEL=/opt/newinegpt/app/dist/models/newinegpt-4b-v6/newinegpt-4b-v6-Q5_K_M-imat-00001-of-00002.gguf
+Environment=NEWINEGPT_LLAMA_SERVER=/opt/newinegpt/llama/llama-server
+Environment=NEWINEGPT_EMBED_GGUF=/opt/newinegpt/app/models/bge-small-en-v1.5-f16.gguf
+ExecStart=/usr/bin/python3 -X utf8 -m newinegpt.web --no-browser
+Restart=always
+RestartSec=5
+KillMode=control-group
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target

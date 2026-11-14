@@ -67,7 +67,8 @@ def main(argv):
     terminal, nobrowser = '--terminal' in argv, '--no-browser' in argv
     argv = [a for a in argv if a not in ('--q4', '--q5', '--gpu', '--check', '--terminal', '--no-browser')] if '--check' not in argv else ['--check']
 
-    print(f'newineGPT beta · {sysname} · {ram:.0f} GB memory · model v6 {q}' + (' · graphics card (Vulkan)' if gpu else ''))
+    print('\n  newineGPT  ·  New Wine · School of the Spirit  (beta)\n  ' + '=' * 54)
+    print(f'  {sysname} · {ram:.0f} GB memory · model v6 {q}' + (' · graphics card (Vulkan)' if gpu else '') + '\n')
     if not server.exists(): fail(f'Missing {server}. Download and unzip the newineGPT file for this computer again.')
     if sysname != 'windows-x64':      # a copy through a USB stick or zip tool can drop the 'executable' flag
         for p in [server] + [x for x in llama.iterdir() if x.suffix in ('.so', '.dylib') or '.so.' in x.name]:

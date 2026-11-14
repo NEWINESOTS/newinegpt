@@ -1,10 +1,17 @@
+<img src="docs/brand/new-wine-school-of-the-spirit.jpg" alt="New Wine School of the Spirit" width="160" align="right">
+
 # newineGPT
+
+**New Wine · School of the Spirit**
 
 **Ask questions about the New Wine / SOTS sermon archive, and get answers that show exactly where in the messages they come from.**
 
-newineGPT runs entirely on your own computer. It needs no internet once it is set up, nothing you type is sent anywhere, and it works on
-**Windows, Mac (Apple chip or Intel) and Linux**. Every answer cites the archive passages it used, with the message title, speaker, date
-and time, so you can check it.
+Every answer cites the archive passages it used, with the message title, speaker, date and time, so you can check it. Use it in two ways:
+
+- **Online, nothing to install:** **[newinegpt.ashinity.com](https://newinegpt.ashinity.com)**. Answers take about 10–50 seconds.
+  The online demo keeps questions, answers and ratings anonymously (no name or address) to improve newineGPT.
+- **On your own computer (Windows, Mac with Apple chip or Intel, Linux):** install it below. It then needs no internet, and nothing
+  you type is sent anywhere.
 
 > **This is a beta.** It can be wrong. If you are testing it, please mark each answer *Good*, *Partly* or *Wrong* (buttons under every
 > answer), and send your results back (see [When you are done](#when-you-are-done)).
@@ -15,28 +22,30 @@ and time, so you can check it.
 
 ### Step 1: Download 3 files
 
-Open the **[latest release](https://github.com/NEWINESOTS/newinegpt/releases/latest)** page and, under **Assets**, click to download:
+Click each link below; the download starts by itself.
 
 **1. The app for your computer (one file):**
 
-| Your computer | Download |
+| Your computer | Click to download |
 |---|---|
-| Windows 10 or 11 | `newineGPT-beta-windows-x64.zip` |
-| Mac with an Apple chip (M1, M2, M3, M4) | `newineGPT-beta-mac-apple-silicon.zip` |
-| Mac with an Intel processor | `newineGPT-beta-mac-intel.zip` |
-| Linux (Ubuntu 22.04 or newer) | `newineGPT-beta-linux-x64.zip` |
+| Windows 10 or 11 | **[newineGPT-beta-windows-x64.zip](https://github.com/NEWINESOTS/newinegpt/releases/latest/download/newineGPT-beta-windows-x64.zip)** (356 MB) |
+| Mac with an Apple chip (M1, M2, M3, M4) | **[newineGPT-beta-mac-apple-silicon.zip](https://github.com/NEWINESOTS/newinegpt/releases/latest/download/newineGPT-beta-mac-apple-silicon.zip)** (282 MB) |
+| Mac with an Intel processor | **[newineGPT-beta-mac-intel.zip](https://github.com/NEWINESOTS/newinegpt/releases/latest/download/newineGPT-beta-mac-intel.zip)** (287 MB) |
+| Linux (Ubuntu 22.04 or newer) | **[newineGPT-beta-linux-x64.zip](https://github.com/NEWINESOTS/newinegpt/releases/latest/download/newineGPT-beta-linux-x64.zip)** (396 MB) |
 
 *Not sure which Mac you have?* Apple menu > **About This Mac**: "Chip: Apple M…" means Apple chip; "Processor: Intel…" means Intel.
 
 **2. The model (both parts of one size):**
 
-| Your computer's memory | Download both files |
+| Your computer's memory | Click to download both parts |
 |---|---|
-| 16 GB or more | `newinegpt-4b-v6-Q5_K_M-imat-00001-of-00002.gguf` and `newinegpt-4b-v6-Q5_K_M-imat-00002-of-00002.gguf` |
-| 8 GB | `newinegpt-4b-v6-Q4_K_M-imat-00001-of-00002.gguf` and `newinegpt-4b-v6-Q4_K_M-imat-00002-of-00002.gguf` |
+| 16 GB or more | **[part 1](https://github.com/NEWINESOTS/newinegpt/releases/download/v0.6.0-beta/newinegpt-4b-v6-Q5_K_M-imat-00001-of-00002.gguf)** and **[part 2](https://github.com/NEWINESOTS/newinegpt/releases/download/v0.6.0-beta/newinegpt-4b-v6-Q5_K_M-imat-00002-of-00002.gguf)** (Q5 model, 2.9 GB in all) |
+| 8 GB | **[part 1](https://github.com/NEWINESOTS/newinegpt/releases/download/v0.6.0-beta/newinegpt-4b-v6-Q4_K_M-imat-00001-of-00002.gguf)** and **[part 2](https://github.com/NEWINESOTS/newinegpt/releases/download/v0.6.0-beta/newinegpt-4b-v6-Q4_K_M-imat-00002-of-00002.gguf)** (Q4 model, 2.5 GB in all) |
 
 *How much memory?* Windows: Settings > System > About > "Installed RAM". Mac: Apple menu > About This Mac > "Memory".
-Leave all the downloads in your **Downloads** folder; newineGPT finds the model there by itself.
+Leave all the downloads in your **Downloads** folder; newineGPT finds the model there by itself. (The model has not changed since
+v0.6.0, so it stays on the [v0.6.0-beta release](https://github.com/NEWINESOTS/newinegpt/releases/tag/v0.6.0-beta); you do not need to
+download it again when you update the app.)
 
 ### Step 2: Unzip and start
 
@@ -47,7 +56,7 @@ Leave all the downloads in your **Downloads** folder; newineGPT finds the model 
 2. Open the extracted folder, then the **newineGPT** folder inside it, and **double-click `START_Windows.bat`**.
 3. If a blue box says **"Windows protected your PC"**: click **More info**, then **Run anyway**. (The beta is not signed by a company yet.)
 4. If it says a **Microsoft Visual C++** part is missing: type `y` and press Enter, and allow it. The installer is included.
-5. Your web browser opens newineGPT. A black window also stays open: **leave it open** while you use newineGPT, and close it when you are done.
+5. Your web browser opens newineGPT. A purple window also stays open: **leave it open** while you use newineGPT, and close it when you are done.
 </details>
 
 <details open>
@@ -91,6 +100,7 @@ the left, so they are still there next time.
 
 | Computer | Time per answer |
 |---|---|
+| Online demo ([newinegpt.ashinity.com](https://newinegpt.ashinity.com)) | about 6–50 seconds (one question at a time; others wait their turn) |
 | Mac with an Apple chip | about 3–10 seconds |
 | Intel Mac (tested: iMac, Core i5-6500, 16 GB) | first answer about 1½ minutes (loading), then about 1 minute |
 | Windows / Linux PC, processor only | about 30–90 seconds on a typical 4–8 core PC (about 2½ minutes on a 2-core machine) |
@@ -106,7 +116,7 @@ While it works, the page shows "Searching the archive and writing an answer…" 
 | Windows: "Windows protected your PC" | Click **More info**, then **Run anyway**. |
 | Windows: Visual C++ / MSVCP140.dll missing | Answer `y` when asked, or run `runtime\windows-x64\vc_redist.x64.exe` in the folder once. |
 | Mac: "cannot be opened" / "damaged" | System Settings > Privacy & Security > **Open Anyway**. Or in Terminal: `xattr -dr com.apple.quarantine ` then drag the newineGPT folder in and press Enter. |
-| The browser did not open | The black/Terminal window shows an address starting `http://127.0.0.1:` – copy it into your browser. |
+| The browser did not open | The purple (Windows) or Terminal (Mac/Linux) window shows an address starting `http://127.0.0.1:` – copy it into your browser. |
 | "newineGPT is not running" in the page | Its window was closed. Double-click the START file again. |
 | Very slow | Normal without an Apple chip; close other big programs. With 8 GB of memory, use the Q4 model. |
 
@@ -156,7 +166,8 @@ was chosen anyway for its faithfulness. Details: [docs/MODEL_CARD_v6.md](docs/MO
    model's answer cannot be verified, newineGPT shows the passages it found instead of an unverified answer.
 
 Everything runs through [llama.cpp](https://github.com/ggml-org/llama.cpp) on your computer. The chat page is served only to your own
-computer (127.0.0.1) and protected with a random key, so no other device or website can use it.
+computer (127.0.0.1) and protected with a random key, so no other device or website can use it. The online demo runs the same app on
+one AWS server; see [deploy/aws](deploy/aws/README.md).
 
 ---
 
@@ -169,7 +180,8 @@ computer (127.0.0.1) and protected with a random key, so no other device or webs
 | `release/` | `build_beta.py` (offline package for all four systems), `make_gh_assets.py` (these release downloads) |
 | `train/` | Prompt format, training-data builder (`make_sft.py`), RunPod LoRA training and pod-side GGUF export scripts, data cards |
 | `eval/` | Model comparison, blind A/B grading, explanation experiments, hold-out audit, and the 109-question regression suite (`eval/golden/`) |
-| `docs/` | Model card, v6 evaluation protocol, install-from-source guide |
+| `docs/` | Model card, v6 evaluation protocol, install-from-source guide, platform tests, brand images |
+| `deploy/` | The online demo: AWS server files (systemd, nginx) and a Hugging Face Space recipe |
 
 **Run from source:** see [docs/INSTALL_FROM_SOURCE.md](docs/INSTALL_FROM_SOURCE.md). In short: Python 3.12 with `numpy`, `llama-server`
 (llama.cpp b9580) on PATH, the archive at `pack/newine_archive.sqlite`, the search model at `models/bge-small-en-v1.5-f16.gguf` and the

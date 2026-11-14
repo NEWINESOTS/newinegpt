@@ -1,5 +1,5 @@
 """Build the offline newineGPT beta folder for Windows x64, Linux x64, Intel Mac and Apple-chip Mac (14 Nov 2026).
-  python3 release/build_beta.py   ->  release/newineGPT_beta_20261114/  (+ SHA256SUMS.txt over every file)
+  python3 release/build_beta.py [folder name]   ->  release/newineGPT_beta_20261114/ or release/<folder name>/  (+ SHA256SUMS.txt over every file)
 Inputs: the app (app/newinegpt, train/prompt.py), the archive (pack/newine_archive.sqlite), the GGUF search model
 (models/bge-small-en-v1.5-f16.gguf), v6 Q5 + Q4 (dist/models/newinegpt-4b-v6), and the verified downloads in release/downloads/
 (MANIFEST.json: llama.cpp b9580, portable CPython 3.12.16 (python-build-standalone 20261026), numpy 2.5.4 wheels, vc_redist.x64.exe).
@@ -7,7 +7,7 @@ Big files are APFS clones (cp -c): no extra disk until the folder is copied else
 import hashlib, json, shutil, subprocess, sys, tarfile, zipfile
 from pathlib import Path
 R = Path.home() / 'newine_local'; DL = R / 'release' / 'downloads'; FILES = R / 'release' / 'beta_files'
-OUT = R / 'release' / 'newineGPT_beta_20261114'
+OUT = R / 'release' / (sys.argv[1] if len(sys.argv) > 1 else 'newineGPT_beta_20261114')   # v0.6.1 (New Wine look): newineGPT_beta_v0.6.1
 PLAT = {   # system: (python archive, numpy wheel, llama archive, site-packages path inside python/)
     'windows-x64': ('cpython-3.12.16+20261026-x86_64-pc-windows-msvc-install_only.tar.gz', 'numpy-2.5.4-cp312-cp312-win_amd64.whl',
                     'llama-b9580-bin-win-cpu-x64.zip', 'Lib/site-packages'),
