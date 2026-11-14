@@ -19,6 +19,11 @@ HERE = Path(__file__).resolve().parent
 USE = A.R / 'eval' / 'human_use'; CONV = USE / 'conversations'; SETTINGS = USE / 'settings.json'
 TOKEN = secrets.token_urlsafe(24)
 LOCK = threading.Lock()
+# NEWINEGPT_PUBLIC=1: hosted demo (e.g. a Hugging Face Space). Listens on 0.0.0.0:$PORT without the key; conversations stay in each
+# visitor's own browser (never listed to others); only ratings (question, answer, rating, note) are kept on the server, anonymously.
+PUBLIC = os.environ.get('NEWINEGPT_PUBLIC') == '1'
+MAX_WAITING = int(os.environ.get('NEWINEGPT_MAX_WAITING', 3))
+WAITING = [0]
 STATE = {'asker': None, 'ready': False, 'error': None, 'session': None, 'name': None, 'n': 0, 'started': time.time()}
 
 
@@ -67,11 +72,19 @@ def do_ask(body):
     cid = body.get('conversation') or time.strftime('%Y%m%d%H%M%S') + secrets.token_hex(3)
     if not STATE['ready']:
         raise RuntimeError(STATE['error'] or 'The model is still loading. Please wait a moment and ask again.')
-    with LOCK:
-        t0 = time.time(); r = STATE['asker'].answer(q); secs = round(time.time() - t0, 1)
-        STATE['n'] += 1; n = STATE['n']
+    if PUBLIC and WAITING[0] >= MAX_WAITING:
+        raise RuntimeError('newineGPT is busy answering other people. Please try again in a minute or two.')
+    WAITING[0] += 1
+    try:
+        with LOCK:
+            t0 = time.time(); r = STATE['asker'].answer(q); secs = round(time.time() - t0, 1)
+            STATE['n'] += 1; n = STATE['n']
+    finally: WAITING[0] -= 1
     msg = {'question': q, 'answer': r['answer'], 'passages': r.get('passages', []), 'kind': r.get('kind'), 'source': r.get('source'),
            'asked_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'seconds': secs, 'n': n}
+    if PUBLIC:
+        print(f"{msg['asked_at']} answered in {secs}s ({msg['source']})", flush=True)
+        return {'conversation': cid, 'message': msg, 'index': None}
     p = conv_path(cid)
     conv = json.loads(p.read_text(encoding='utf-8')) if p.exists() else {'id': cid, 'title': q[:80], 'created': msg['asked_at'], 'messages': []}
     conv['messages'].append(msg); conv['updated'] = msg['asked_at']; save_json(p, conv)
@@ -83,6 +96,11 @@ def do_rate(body):
     cid, i = body.get('conversation'), int(body.get('index', -1))
     rating = {'g': 'good', 'p': 'partly', 'w': 'wrong'}.get((body.get('rating') or '')[:1])
     if not rating: raise ValueError('rating must be good, partly or wrong')
+    if PUBLIC:
+        rec = {'rating': rating, 'note': (body.get('note') or '').strip()[:500], 'question': (body.get('question') or '')[:1000],
+               'answer': (body.get('answer') or '')[:4000], 'source': (body.get('source') or '')[:40], 'rated_at': time.strftime('%Y-%m-%d %H:%M:%S')}
+        append(USE / 'public_ratings.jsonl', rec); print('rating ' + json.dumps(rec, ensure_ascii=False), flush=True)
+        return {'ok': True}
     p = conv_path(cid); conv = json.loads(p.read_text(encoding='utf-8')); m = conv['messages'][i]
     m['rating'] = rating; m['note'] = (body.get('note') or '').strip()[:500]; save_json(p, conv)
     append(session_dir() / 'ratings.jsonl', {'n': m.get('n'), 'question': m['question'], 'rating': rating, 'note': m['note'],
@@ -110,11 +128,11 @@ class H(BaseHTTPRequestHandler):
         self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:")
         self.end_headers(); self.wfile.write(data)
 
-    def _host_ok(self):        # refuse requests addressed to another host name (DNS rebinding)
-        return (self.headers.get('Host') or '').split(':')[0] in ('127.0.0.1', 'localhost')
+    def _host_ok(self):        # refuse requests addressed to another host name (DNS rebinding); a public demo has its own host name
+        return PUBLIC or (self.headers.get('Host') or '').split(':')[0] in ('127.0.0.1', 'localhost')
 
     def _auth(self):
-        return self._host_ok() and secrets.compare_digest(self.headers.get('X-Token', ''), TOKEN)
+        return PUBLIC or (self._host_ok() and secrets.compare_digest(self.headers.get('X-Token', ''), TOKEN))
 
     def do_GET(self):
         if not self._host_ok(): return self._send(403, {'error': 'forbidden'})
@@ -125,10 +143,11 @@ class H(BaseHTTPRequestHandler):
         try:
             if path == '/api/status':
                 s = load_settings()
-                return self._send(200, {'ready': STATE['ready'], 'error': STATE['error'], 'name': STATE['name'] or s.get('name'),
+                return self._send(200, {'ready': STATE['ready'], 'error': STATE['error'], 'name': STATE['name'] or s.get('name'), 'public': PUBLIC,
+                                        'waiting': WAITING[0],
                                         'model': Path(A.MODEL).name, 'loading_seconds': int(time.time() - STATE['started'])})
-            if path == '/api/conversations': return self._send(200, list_convs())
-            if path == '/api/conversation':
+            if path == '/api/conversations': return self._send(200, [] if PUBLIC else list_convs())
+            if path == '/api/conversation' and not PUBLIC:
                 cid = self.path.split('id=', 1)[1] if 'id=' in self.path else ''
                 return self._send(200, json.loads(conv_path(cid).read_text(encoding='utf-8')))
         except Exception as e:
@@ -144,7 +163,7 @@ class H(BaseHTTPRequestHandler):
             path = self.path.split('?')[0]
             if path == '/api/ask': return self._send(200, do_ask(body))
             if path == '/api/rate': return self._send(200, do_rate(body))
-            if path == '/api/name':
+            if path == '/api/name' and not PUBLIC:
                 name = (body.get('name') or '').strip()[:60] or 'tester'; STATE['name'] = name
                 s = load_settings(); s['name'] = name; save_json(SETTINGS, s); return self._send(200, {'ok': True})
         except Exception as e:
@@ -161,7 +180,7 @@ def free_port(start):
 
 
 def main(argv):
-    port = free_port(int(argv[argv.index('--port') + 1]) if '--port' in argv else 8765)
+    port = int(os.environ.get('PORT', 7860)) if PUBLIC else free_port(int(argv[argv.index('--port') + 1]) if '--port' in argv else 8765)
     # Stop the two llama.cpp helpers on ANY stop (window closed = SIGHUP, kill = SIGTERM), not only a normal exit: otherwise they keep
     # running and holding memory (found 14 Nov: a killed test server left both behind, and the next start silently reused them).
     def _stop(*_): raise KeyboardInterrupt
@@ -171,12 +190,12 @@ def main(argv):
             except (ValueError, OSError): pass
     CONV.mkdir(parents=True, exist_ok=True)
     threading.Thread(target=warm_up, daemon=True).start()
-    srv = ThreadingHTTPServer(('127.0.0.1', port), H)
-    url = f'http://127.0.0.1:{port}/?t={TOKEN}'
+    srv = ThreadingHTTPServer(('0.0.0.0' if PUBLIC else '127.0.0.1', port), H)
+    url = f'http://127.0.0.1:{port}/' + ('' if PUBLIC else f'?t={TOKEN}')
     (USE / 'last_url.txt').write_text(url + '\n', encoding='utf-8')          # tests and the 'open again' hint read it
     print(f'\nnewineGPT is running in your web browser.\nIf it did not open, copy this address into your browser:\n  {url}\n'
           f'Keep this window open while you use newineGPT. Close it to stop.\n', flush=True)
-    if '--no-browser' not in argv:
+    if '--no-browser' not in argv and not PUBLIC:
         threading.Timer(1.0, lambda: webbrowser.open(url)).start()
     try: srv.serve_forever()
     except KeyboardInterrupt: pass

@@ -76,7 +76,9 @@ class Model:
             if any(Path(i).name == Path(self.gguf).name for i in ids): return
             raise RuntimeError(f'port {PORT} already serves {ids}, not {Path(self.gguf).name}; stop that llama-server first')
         # NEWINEGPT_NGL=0 forces CPU only (the offline package's CPU builds ignore GPU layers anyway)
-        self.proc = subprocess.Popen([LLAMA_SERVER, '-m', self.gguf, '--port', str(PORT), '-c', '8192', '--jinja', '-ngl', os.environ.get('NEWINEGPT_NGL', '99')],
+        # NEWINEGPT_THREADS: fixed CPU thread count for hosted containers that report the host's cores, not their own share
+        self.proc = subprocess.Popen([LLAMA_SERVER, '-m', self.gguf, '--port', str(PORT), '-c', '8192', '--jinja', '-ngl', os.environ.get('NEWINEGPT_NGL', '99')]
+                                     + (['-t', os.environ['NEWINEGPT_THREADS']] if os.environ.get('NEWINEGPT_THREADS') else []),
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         import atexit; atexit.register(self.close)
         for _ in range(180):
