@@ -179,8 +179,14 @@ The archive, search model and model files are in the release downloads (the arch
 **Model:** Qwen3-4B + LoRA (r 16, lr 1e-4, 1.25 epochs, max length 2,304) on 10,704 grounded examples, trained on one A100; GGUF
 Q5_K_M / Q4_K_M with an importance matrix. Validation loss 0.281.
 
-## Credits and licences
+## Licence: free, not for sale
 
-Bundled third-party software (unmodified official builds): llama.cpp (MIT), CPython 3.12 from python-build-standalone (PSF), numpy (BSD-3),
-Microsoft Visual C++ Redistributable (Microsoft licence terms), libgomp from Ubuntu (GCC Runtime Library Exception). Models: Qwen3-4B
-(Apache-2.0), bge-small-en-v1.5 (MIT). See `LICENSES.txt` in each download. The sermon content belongs to its speakers and New Wine / SOTS.
+newineGPT is **free to use, copy and share for non-commercial purposes. It may not be sold, monetized, or used in a paid product or service.**
+
+- **Code** (this repository): [PolyForm Noncommercial License 1.0.0](LICENSE.md).
+- **Model and archive data** (the release downloads): [CC BY-NC 4.0](LICENSE-MODEL-AND-DATA.md), with credit to NEWINESOTS / newineGPT.
+- The sermon content belongs to its speakers and New Wine / SOTS.
+
+Bundled third-party software keeps its own licence (unmodified official builds): llama.cpp (MIT), CPython 3.12 from python-build-standalone
+(PSF), numpy (BSD-3), Microsoft Visual C++ Redistributable (Microsoft licence terms), libgomp from Ubuntu (GCC Runtime Library Exception).
+Models: Qwen3-4B (Apache-2.0), bge-small-en-v1.5 (MIT). See `LICENSES.txt` in each download.
